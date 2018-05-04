@@ -4,14 +4,6 @@
 #include <time.h>
 #include <stdio.h>
 #include <ctype.h>
-#include <opencv/cv.h>
-
-#include <stdio.h>
-#include <time.h>
-#include <memory.h>
-#include <stdlib.h>
-
-
 
 char buff[255];
 
@@ -19,7 +11,7 @@ char* filename();
 char* read();
 void addLogging(char* add);
 void newFile();
-char *time_stamp();
+char* time_stamp();
 void incrementCounter();
 
 char* filename() {
@@ -34,8 +26,8 @@ char* filename() {
     const char* mon = months[tm.tm_mon];
 
     // get year
-    char year[5];
-    sprintf(&year, "%d", tm.tm_year + 1900);
+    char year[15];
+    sprintf(year, "%d", tm.tm_year + 1900);
 
     //fileextension
     const char *extension = ".txt";
@@ -74,14 +66,14 @@ void addLogging(char* add){
 
     incrementCounter();
 
-    printf("%s \n", add);
+   // printf("%s \n", add);
 
     size_t len = strlen(add) + strlen("\n");
     char *ret = (char*)calloc(len * sizeof(char) + 1, 1);
 
     fprintf(fpAdd, "%s", strcat(strcat(ret, add) , "\n"));
 
-    printf("%s \n", add);
+  //  printf("%s \n", add);
 
     free(ret);
 
@@ -110,8 +102,8 @@ char* time_stamp(){ // modyfied vertion of from https://stackoverflow.com/questi
     sprintf(timestamp,"%04d-%02d-%02d %02d:%02d:%02d", tm->tm_year+1900, tm->tm_mon,
             tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
 
-    printf(timestamp,"%04d-%02d-%02d %02d:%02d:%02d \n", tm->tm_year+1900, tm->tm_mon,
-           tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
+    //printf(timestamp,"%04d-%02d-%02d %02d:%02d:%02d \n", tm->tm_year+1900, tm->tm_mon,
+    //       tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
 
     return timestamp;
 }
@@ -199,8 +191,6 @@ void checkMove(){
 
         strcpy(src,  time_stamp());
         strcat(src, ".jpg");
-
-        printf(src);
 
         cvSaveImage(src, frame, 0);
     } else{
@@ -326,15 +316,6 @@ static void  update_mhi( IplImage* img, IplImage* dst, int diff_threshold )
         } else {
             movement++;
         }
-
-
-        // draw a clock with arrow indicating the direction
-        center = cvPoint( (comp_rect.x + comp_rect.width/2),
-                          (comp_rect.y + comp_rect.height/2) );
-
-        cvCircle( dst, center, cvRound(magnitude*1.2), color, 3, CV_AA, 0 );
-        cvLine( dst, center, cvPoint( cvRound( center.x + magnitude*cos(angle*CV_PI/180)),
-                cvRound( center.y - magnitude*sin(angle*CV_PI/180))), color, 3, CV_AA, 0 );
     }
 }
 
