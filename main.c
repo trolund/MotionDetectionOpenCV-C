@@ -14,6 +14,34 @@ void newFile();
 char* time_stamp();
 void incrementCounter();
 
+// various tracking parameters (in seconds)
+const double MHI_DURATION = 1;
+const double MAX_TIME_DELTA = 0.5;
+const double MIN_TIME_DELTA = 0.05;
+// number of cyclic frame buffer used for motion detection
+// (should, probably, depend on FPS)
+const int N = 4;
+
+// ring image buffer
+IplImage **buf = 0;
+int last = 0;
+
+// temporary images
+IplImage *mhi = 0; // MHI
+IplImage *orient = 0; // orientation
+IplImage *mask = 0; // valid orientation maskz
+IplImage *segmask = 0; // motion segmentation map
+CvMemStorage* storage = 0; // temporary storage
+
+// parameters:
+//  img - input video frame
+//  dst - resultant motion picture
+//  args - optional parameters
+
+int movement = 0;
+int nonMovment = 0;
+int startTime = 0;
+
 char* filename() {
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
@@ -66,14 +94,14 @@ void addLogging(char* add){
 
     incrementCounter();
 
-   // printf("%s \n", add);
+    // printf("%s \n", add);
 
     size_t len = strlen(add) + strlen("\n");
     char *ret = (char*)calloc(len * sizeof(char) + 1, 1);
 
     fprintf(fpAdd, "%s", strcat(strcat(ret, add) , "\n"));
 
-  //  printf("%s \n", add);
+    //  printf("%s \n", add);
 
     free(ret);
 
@@ -110,7 +138,6 @@ char* time_stamp(){ // modyfied vertion of from https://stackoverflow.com/questi
 
 void incrementCounter(){
     FILE *fpR;
-    size_t bytesRead;
     char number[5];
 
     fpR = fopen(filename(), "r+");
@@ -118,62 +145,27 @@ void incrementCounter(){
     fscanf(fpR,"%20[^\n]\n",number); // kan incrementere tal op til 20 cifre.
     fseek(fpR, 0, SEEK_SET);
 
-    int count = atoi(number);
+   // int count = atoi(number);
+
+    char *ptr;
+   // long ret;
+
+    long count = strtol(number, &ptr, 10); // base 10
 
     count++;
 
-    char str[20];
+    //char str[20];
 
-    sprintf(str, "%d", count);
+    sprintf(ptr, "%d", count);
     // Now str contains the integer as characters
 
-    fprintf(fpR, str);
+    fprintf(fpR, ptr);
     fclose(fpR);
 }
 
-static void help(void)
-{
-    printf(
-            "\nThis program demonstrated the use of motion templates -- basically using the gradients\n"
-            "of thresholded layers of decaying frame differencing. New movements are stamped on top with floating system\n"
-            "time code and motions too old are thresholded away. This is the 'motion history file'. The program reads from the camera of your choice or from\n"
-            "a file. Gradients of motion history are used to detect direction of motoin etc\n"
-            "Usage :\n"
-            "./motempl [camera number 0-n or file name, default is camera 0]\n"
-            );
-}
-// various tracking parameters (in seconds)
-const double MHI_DURATION = 1;
-const double MAX_TIME_DELTA = 0.5;
-const double MIN_TIME_DELTA = 0.05;
-// number of cyclic frame buffer used for motion detection
-// (should, probably, depend on FPS)
-const int N = 4;
-
-// ring image buffer
-IplImage **buf = 0;
-int last = 0;
-
-// temporary images
-IplImage *mhi = 0; // MHI
-IplImage *orient = 0; // orientation
-IplImage *mask = 0; // valid orientation maskz
-IplImage *segmask = 0; // motion segmentation map
-CvMemStorage* storage = 0; // temporary storage
-
-// parameters:
-//  img - input video frame
-//  dst - resultant motion picture
-//  args - optional parameters
-
-int movement = 0;
-int nonMovment = 0;
-int startTime = 0;
-
-
 void checkMove(){
     if(movement > nonMovment){
-        printf("movement\n");
+        printf("movement at: %c \n", time_stamp());
         addLogging(time_stamp());
         CvCapture* capture =cvCreateCameraCapture(0);
         IplImage* frame = cvQueryFrame(capture);
@@ -184,22 +176,23 @@ void checkMove(){
 
         CvScalar color = CV_RGB(255,0,0);
 
-        cvInitFont( &base_font, CV_FONT_HERSHEY_SIMPLEX, 1.5, 1.5, 0, 1, 5);
+        cvInitFont( &base_font, CV_FONT_HERSHEY_SIMPLEX, 1.5, 1.5, 0, 1, 1);
 
         cvPutText(frame, time_stamp(), cvPoint( 20, 50 ), &base_font, color);
+
         char src[50];
 
         strcpy(src,  time_stamp());
         strcat(src, ".jpg");
 
         cvSaveImage(src, frame, 0);
+
     } else{
         printf("No movement\n");
     }
 }
 
-static void  update_mhi( IplImage* img, IplImage* dst, int diff_threshold )
-{
+static void  update_mhi( IplImage* img, IplImage* dst, int diff_threshold ) {
     double timestamp = (double)clock()/CLOCKS_PER_SEC; // get current time in seconds
     CvSize size = cvSize(img->width,img->height); // get current frame size
     int i, idx1 = last, idx2;
@@ -304,8 +297,8 @@ static void  update_mhi( IplImage* img, IplImage* dst, int diff_threshold )
         struct tm tm = *localtime(&t);
 
         // check for the case of little motion
-        if( count < comp_rect.width*comp_rect.height * 0.01 ) {
-            if(tm.tm_sec > startTime + 1){
+        if( count < comp_rect.width*comp_rect.height * 0.05 ) {
+            if(tm.tm_sec > startTime + 5){
                 checkMove();
                 startTime = tm.tm_sec;
                 movement = 0;
@@ -319,16 +312,10 @@ static void  update_mhi( IplImage* img, IplImage* dst, int diff_threshold )
     }
 }
 
-
-
-int main(int argc, char** argv)
-{
-
+int main(int argc, char** argv) {
     read();
     IplImage* motion = 0;
     CvCapture* capture = 0;
-
-    help();
 
     if( argc == 1 || (argc == 2 && strlen(argv[1]) == 1 && isdigit(argv[1][0])))
         capture = cvCaptureFromCAM( argc == 2 ? argv[1][0] - '0' : 0 );
@@ -339,18 +326,15 @@ int main(int argc, char** argv)
     {
         cvNamedWindow( "Motion", 1 );
 
-        for(;;)
-        {
+        for(;;) {
             IplImage* image = cvQueryFrame( capture );
             if( !image )
                 break;
 
-            if( !motion )
-            {
+            if( !motion ) {
                 motion = cvCreateImage( cvSize(image->width,image->height), 8, 3 );
                 cvZero( motion );
                 motion->origin = image->origin;
-
             }
 
             update_mhi( image, motion, 30 );
