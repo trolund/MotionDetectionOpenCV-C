@@ -18,6 +18,8 @@ void incrementCounter();
 const double MHI_DURATION = 1;
 const double MAX_TIME_DELTA = 0.5;
 const double MIN_TIME_DELTA = 0.05;
+const int LOG_UPDATE_TIME = 5;
+
 // number of cyclic frame buffer used for motion detection
 // (should, probably, depend on FPS)
 const int N = 4;
@@ -165,7 +167,7 @@ void incrementCounter(){
 
 void checkMove(){
     if(movement > nonMovment){
-        printf("movement at: %c \n", time_stamp());
+        printf("movement at: %s \n", time_stamp());
         addLogging(time_stamp());
         CvCapture* capture =cvCreateCameraCapture(0);
         IplImage* frame = cvQueryFrame(capture);
@@ -298,7 +300,7 @@ static void  update_mhi( IplImage* img, IplImage* dst, int diff_threshold ) {
 
         // check for the case of little motion
         if( count < comp_rect.width*comp_rect.height * 0.05 ) {
-            if(tm.tm_sec > startTime + 5){
+            if(tm.tm_sec > startTime + LOG_UPDATE_TIME){
                 checkMove();
                 startTime = tm.tm_sec;
                 movement = 0;
