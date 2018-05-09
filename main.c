@@ -184,7 +184,7 @@ void checkMove(){
 
         char src[50];
 
-        strcpy(src,  time_stamp());
+        strcpy(src, time_stamp());
         strcat(src, ".jpg");
 
         cvSaveImage(src, frame, 0);
@@ -300,19 +300,28 @@ static void  update_mhi( IplImage* img, IplImage* dst, int diff_threshold ) {
 
         // check for the case of little motion
         if( count < comp_rect.width*comp_rect.height * 0.05 ) {
-            if(tm.tm_sec > startTime + LOG_UPDATE_TIME){
-                checkMove();
-                startTime = tm.tm_sec;
-                movement = 0;
-                nonMovment = 0;
-            }
             nonMovment++;
-            continue;
         } else {
             movement++;
         }
+
+        if(startTime == 0){
+            startTime = t;
+        }
+
+        int now = t;
+        int then = startTime;
+
+        if(now >= then + LOG_UPDATE_TIME){
+            checkMove();
+            startTime = t;
+            movement = 0;
+            nonMovment = 0;
+        }
     }
 }
+
+
 
 int main(int argc, char** argv) {
     read();
