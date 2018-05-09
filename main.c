@@ -168,8 +168,9 @@ void incrementCounter(){
 void checkMove(){
     if(movement > nonMovment){
         printf("movement at: %s \n", time_stamp());
+        read();
         addLogging(time_stamp());
-        CvCapture* capture =cvCreateCameraCapture(0);
+        CvCapture* capture = cvCreateCameraCapture(0);
         IplImage* frame = cvQueryFrame(capture);
             if(!frame){
                 printf("Error. Cannot get the frame.");
@@ -360,6 +361,19 @@ int main(int argc, char** argv) {
 
     return 0;
 }
+
+
+// test
+/*
+int main(int argc, char** argv) {
+    while(1) {
+        read();
+        addLogging(time_stamp());
+    }
+    return 0;
+}
+
+*/
 
 #ifdef _EiC
 main(1,"motempl.c");
