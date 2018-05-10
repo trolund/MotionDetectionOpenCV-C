@@ -16,6 +16,8 @@ void incrementCounter();
 const double MHI_DURATION = 1;
 const double MAX_TIME_DELTA = 0.5;
 const double MIN_TIME_DELTA = 0.05;
+
+// time in sec for updating time interval.
 const int LOG_UPDATE_TIME = 5;
 
 // number of cyclic frame buffer used for motion detection
@@ -38,7 +40,7 @@ CvMemStorage* storage = 0; // temporary storage
 //  dst - resultant motion picture
 //  args - optional parameters
 
-int movement = 0;
+int movement = 0;  // counter var for movement
 int nonMovment = 0;
 int startTime = 0;
 
