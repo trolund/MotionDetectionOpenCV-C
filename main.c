@@ -5,8 +5,6 @@
 #include <stdio.h>
 #include <ctype.h>
 
-char buff[255];
-
 char* filename();
 char* read();
 void addLogging(char* add);
@@ -73,6 +71,7 @@ char* filename() {
 }
 
 char* read(){
+    char buff[255];
 
     FILE *fpR = fopen(filename(), "r+");
 
@@ -122,8 +121,10 @@ void newFile(){
     printf("Ny log fil oprettet.\n");
 }
 
+
 char* time_stamp(){ // modyfied vertion of from https://stackoverflow.com/questions/1444428/time-stamp-in-the-c-programming-language
-    char *timestamp = (char *)malloc(sizeof(char) * 16);
+    char* timestamp = (char *)malloc(sizeof(char) * 16);
+
     time_t ltime;
     ltime=time(NULL);
     struct tm *tm;
@@ -165,13 +166,13 @@ void incrementCounter(){
     fclose(fpR);
 }
 
-void checkMove(){
+void checkMove(IplImage* frame){
     if(movement > nonMovment){
         printf("movement at: %s \n", time_stamp());
         read();
         addLogging(time_stamp());
-        CvCapture* capture = cvCreateCameraCapture(0);
-        IplImage* frame = cvQueryFrame(capture);
+      //  CvCapture* capture = cvCreateCameraCapture(0);
+       // IplImage* frame = cvQueryFrame(capture);
             if(!frame){
                 printf("Error. Cannot get the frame.");
             }
@@ -314,7 +315,7 @@ static void  update_mhi( IplImage* img, IplImage* dst, int diff_threshold ) {
         int then = startTime;
 
         if(now >= then + LOG_UPDATE_TIME){
-            checkMove();
+            checkMove(img);
             startTime = t;
             movement = 0;
             nonMovment = 0;
@@ -336,7 +337,7 @@ int main(int argc, char** argv) {
 
     if( capture )
     {
-        cvNamedWindow( "Motion", 1 );
+        cvNamedWindow( "Motion Detection", 1 );
 
         for(;;) {
             IplImage* image = cvQueryFrame( capture );
@@ -356,7 +357,7 @@ int main(int argc, char** argv) {
                 break;
         }
         cvReleaseCapture( &capture );
-        cvDestroyWindow( "Motion" );
+        cvDestroyWindow( "Motion Detection" );
     }
 
     return 0;
